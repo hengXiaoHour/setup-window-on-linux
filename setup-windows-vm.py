@@ -7,6 +7,7 @@ LOCAL_SHARE_APPS = f"{HOME}/.local/share/applications"
 LOCAL_SHARE_ICONS = f"{HOME}/.local/share/icons"
 STORAGE = f"{HOME}/windows"
 CONTAINER = "windows"
+SUDO = "sudo"
 
 def run(cmd, capture=False, timeout=120):
     try:
@@ -17,9 +18,9 @@ def run(cmd, capture=False, timeout=120):
         return 1
 
 def check_sudo():
-    r = subprocess.run("sudo -n true 2>/dev/null", shell=True)
+    r = subprocess.run(f"{SUDO} true 2>/dev/null", shell=True)
     if r.returncode != 0:
-        print("[!] This script needs sudo. Run: sudo python3 setup-windows-vm.py")
+        print(f"[!] This script needs sudo. Run: sudo python3 {__file__}")
         sys.exit(1)
 
 def step(n, title):
@@ -40,16 +41,16 @@ def install_docker():
         print("    Docker already installed")
         return
     subprocess.run("curl -fsSL https://get.docker.com -o /tmp/get-docker.sh", shell=True, check=True, timeout=30)
-    subprocess.run("sudo sh /tmp/get-docker.sh", shell=True, check=True, timeout=120)
-    subprocess.run("sudo usermod -aG docker $USER", shell=True, timeout=10)
-    subprocess.run("sudo systemctl enable docker", shell=True, timeout=10)
-    subprocess.run("sudo systemctl start docker", shell=True, timeout=10)
-    subprocess.run("sudo chmod 666 /var/run/docker.sock", shell=True, timeout=10)
+    subprocess.run(f"{SUDO} sh /tmp/get-docker.sh", shell=True, check=True, timeout=120)
+    subprocess.run(f"{SUDO} usermod -aG docker $USER", shell=True, timeout=10)
+    subprocess.run(f"{SUDO} systemctl enable docker", shell=True, timeout=10)
+    subprocess.run(f"{SUDO} systemctl start docker", shell=True, timeout=10)
+    subprocess.run(f"{SUDO} chmod 666 /var/run/docker.sock", shell=True, timeout=10)
     print("    Docker installed")
 
 def pull_image():
     step("3/9", "Pulling dockurr/windows image")
-    run(f"docker pull dockurr/windows", timeout=180)
+    run(f"docker pull dockurr/windows", timeout=300)
 
 def run_container():
     step("4/9", "Starting Windows container")
@@ -83,7 +84,7 @@ def install_rdp():
     step("6/9", "Installing RDP client")
     r1 = run("apt-cache show freerdp3-x11 2>/dev/null", capture=True)
     pkg = "freerdp3-x11" if r1[1] == 0 else "freerdp-x11"
-    run(f"sudo apt-get install -y -qq {pkg} 2>/dev/null", timeout=60)
+    run(f"{SUDO} apt-get install -y -qq {pkg} 2>/dev/null", timeout=120)
 
 def create_helper_script():
     step("7/9", "Creating helper scripts")
@@ -95,6 +96,7 @@ sleep 3
 xfreerdp3 /v:localhost /u:Docker /p:admin /cert:ignore /sound /f /dynamic-resolution /w:2560 /h:1440 /pwidth:339 /pheight:191 /scale:180
 """)
     os.chmod(f"{LOCAL_BIN}/windows-vm", 0o755)
+    print(f"    Created {LOCAL_BIN}/windows-vm")
 
 def create_desktop_icon():
     step("8/9", "Creating desktop launcher")
@@ -123,7 +125,7 @@ def verify_and_fix():
         ("Desktop file", f"test -f {LOCAL_SHARE_APPS}/windows-vm.desktop && echo yes", "yes"),
         ("Icon file", f"test -f {LOCAL_SHARE_ICONS}/windows11.png && echo yes", "yes"),
         ("RDP client", f"sh -c 'which xfreerdp3 || which xfreerdp' && echo yes", "yes"),
-        ("Docker autostart", "systemctl is-enabled docker 2>/dev/null", "enabled"),
+        ("Docker autostart", f"{SUDO} systemctl is-enabled docker 2>/dev/null", "enabled"),
     ]
     failed = []
     for label, cmd, expected in checks:
