@@ -104,6 +104,7 @@ def create_helper_script():
 docker start windows 2>/dev/null
 sleep 3
 xfreerdp3 /v:localhost /u:Docker /p:admin /cert:ignore /sound /f /dynamic-resolution /w:{VM_WIDTH} /h:{VM_HEIGHT} /pwidth:{pwidth} /pheight:{pheight} /scale:180
+docker stop windows
 """)
     os.chmod(f"{LOCAL_BIN}/windows-vm", 0o755)
     print(f"    Created {LOCAL_BIN}/windows-vm")
