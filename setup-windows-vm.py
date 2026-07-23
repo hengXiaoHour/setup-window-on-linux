@@ -102,7 +102,13 @@ def create_helper_script():
     with open(f"{LOCAL_BIN}/windows-vm", "w") as f:
         f.write(f"""#!/bin/bash
 docker start windows 2>/dev/null
-sleep 3
+echo "Waiting for Windows to boot..."
+for i in $(seq 1 60); do
+  if timeout 1 bash -c "echo > /dev/tcp/127.0.0.1/3389" 2>/dev/null; then
+    break
+  fi
+  sleep 1
+done
 xfreerdp3 /v:localhost /u:Docker /p:admin /cert:ignore /sound /f /dynamic-resolution /w:{VM_WIDTH} /h:{VM_HEIGHT} /pwidth:{pwidth} /pheight:{pheight} /scale:180
 docker stop windows
 """)
