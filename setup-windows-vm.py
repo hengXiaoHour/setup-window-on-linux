@@ -72,7 +72,7 @@ def run_container():
         f"-e DISK_SIZE={VM_DISK} -e DISK_CACHE=writeback "
         f"-e WIDTH={VM_WIDTH} -e HEIGHT={VM_HEIGHT} "
         f"-v {STORAGE}:/storage "
-        f"--restart unless-stopped "
+        f"--restart always "
         f"dockurr/windows"
     )
     run(cmd)
