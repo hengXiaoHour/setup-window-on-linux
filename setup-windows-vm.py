@@ -9,6 +9,14 @@ STORAGE = f"{HOME}/windows"
 CONTAINER = "windows"
 SUDO = "sudo"
 
+# ---- CONFIGURATION - edit these to match your system ----
+VM_VERSION = "11"        # Windows version: "10" or "11"
+VM_RAM = "8G"            # RAM for Windows (use half of your total)
+VM_CPU = "8"             # CPU cores for Windows (use half of your total)
+VM_DISK = "128G"         # Disk size for Windows
+VM_WIDTH = "2560"        # Your monitor width in pixels
+VM_HEIGHT = "1440"       # Your monitor height in pixels
+
 def run(cmd, capture=False, timeout=120):
     try:
         r = subprocess.run(cmd, shell=True, capture_output=capture, text=True, timeout=timeout)
@@ -60,9 +68,9 @@ def run_container():
         f"docker run -itd --name {CONTAINER} "
         f"-p 8006:8006 -p 3389:3389 "
         f"--device=/dev/kvm --cap-add NET_ADMIN "
-        f"-e VERSION=11 -e RAM_SIZE=8G -e CPU_CORES=8 "
-        f"-e DISK_SIZE=128G -e DISK_CACHE=writeback "
-        f"-e WIDTH=2560 -e HEIGHT=1440 "
+        f"-e VERSION={VM_VERSION} -e RAM_SIZE={VM_RAM} -e CPU_CORES={VM_CPU} "
+        f"-e DISK_SIZE={VM_DISK} -e DISK_CACHE=writeback "
+        f"-e WIDTH={VM_WIDTH} -e HEIGHT={VM_HEIGHT} "
         f"-v {STORAGE}:/storage "
         f"--restart unless-stopped "
         f"dockurr/windows"
@@ -89,11 +97,13 @@ def install_rdp():
 def create_helper_script():
     step("7/9", "Creating helper scripts")
     os.makedirs(LOCAL_BIN, exist_ok=True)
+    pwidth = int(int(VM_WIDTH) * 25.4 / 192)
+    pheight = int(int(VM_HEIGHT) * 25.4 / 192)
     with open(f"{LOCAL_BIN}/windows-vm", "w") as f:
-        f.write("""#!/bin/bash
+        f.write(f"""#!/bin/bash
 docker start windows 2>/dev/null
 sleep 3
-xfreerdp3 /v:localhost /u:Docker /p:admin /cert:ignore /sound /f /dynamic-resolution /w:2560 /h:1440 /pwidth:339 /pheight:191 /scale:180
+xfreerdp3 /v:localhost /u:Docker /p:admin /cert:ignore /sound /f /dynamic-resolution /w:{VM_WIDTH} /h:{VM_HEIGHT} /pwidth:{pwidth} /pheight:{pheight} /scale:180
 """)
     os.chmod(f"{LOCAL_BIN}/windows-vm", 0o755)
     print(f"    Created {LOCAL_BIN}/windows-vm")
