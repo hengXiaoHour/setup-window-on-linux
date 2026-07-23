@@ -105,6 +105,7 @@ docker start windows 2>/dev/null
 echo "Waiting for Windows to boot..."
 for i in $(seq 1 60); do
   if timeout 1 bash -c "echo > /dev/tcp/127.0.0.1/3389" 2>/dev/null; then
+    sleep 5
     break
   fi
   sleep 1
