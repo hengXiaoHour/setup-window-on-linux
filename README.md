@@ -98,6 +98,12 @@ Run the browser fallback at `http://localhost:8006` and make sure Remote Desktop
 **UI is too small or too large in RDP**
 Adjust `WIDTH`/`HEIGHT` in the script to match your monitor, then rerun.
 
+**No internet in Windows (school/corporate WiFi)**
+Some networks block Docker NAT DNS. Inside Windows, run:
+```cmd
+netsh interface ip set dns name="Ethernet" source=static addr=8.8.8.8
+```
+
 **Container won't start**
 Check logs: `docker logs windows`
 
