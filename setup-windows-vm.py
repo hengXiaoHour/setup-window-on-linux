@@ -80,13 +80,23 @@ def run_container():
 
 def download_icon():
     step("5/9", "Downloading Windows 11 icon")
-    os.makedirs(LOCAL_SHARE_ICONS, exist_ok=True)
     url = "https://img.icons8.com/color/512/windows-11.png"
+    tmp_path = "/tmp/windows11.png"
     try:
-        urllib.request.urlretrieve(url, f"{LOCAL_SHARE_ICONS}/windows11.png")
+        urllib.request.urlretrieve(url, tmp_path)
     except:
         url2 = "https://raw.githubusercontent.com/HotCakeX/Harden-Windows-Security/main/images/PNGs/Windows11.png"
-        urllib.request.urlretrieve(url2, f"{LOCAL_SHARE_ICONS}/windows11.png")
+        urllib.request.urlretrieve(url2, tmp_path)
+    # Install icon into standard hicolor subdirectories so GNOME/xfce/etc. find it
+    for size in ["16", "22", "24", "32", "48", "64", "96", "128", "256", "512"]:
+        icon_dir = f"{LOCAL_SHARE_ICONS}/hicolor/{size}x{size}/apps"
+        os.makedirs(icon_dir, exist_ok=True)
+        shutil.copy2(tmp_path, f"{icon_dir}/windows11.png")
+    # Also keep a copy at the root for backward-compat / script verification
+    os.makedirs(LOCAL_SHARE_ICONS, exist_ok=True)
+    shutil.copy2(tmp_path, f"{LOCAL_SHARE_ICONS}/windows11.png")
+    os.remove(tmp_path)
+    run("gtk-update-icon-cache ~/.local/share/icons 2>/dev/null")
 
 def install_rdp():
     step("6/9", "Installing RDP client")
